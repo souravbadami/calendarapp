@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf_token" content="{{ csrf_token }}">
+    <title>calendarApp</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <link href="{% static "css/bootstrap4.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/navbar-top-fixed.css" %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="{% static "js/jquery.simple-dtpicker.js" %}"></script>
+    <script src="{% static "js/moment.min.js" %}"></script>
+    <script src="{% static "js/calendar.js" %}"></script>
+    <script src="{% static "js/gapi-helper.js" %}"></script>
+    <script src="{% static "js/gcal.js" %}"></script>
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+    <script src="https://apis.google.com/js/client.js"></script>
+    <link rel='stylesheet' href="{% static "css/calendar.css" %}" />
+    <link href="{% static "css/jquery.simple-dtpicker.css" %}" rel="stylesheet">
+    
+    <style>
+        .datepicker {
+         z-index: 100000 !important;
+        display: block;
+        }
+    </style>
+    
+    <script type="text/javascript">
+		$(function(){
+			$('*[name=start]').appendDtpicker({
+	        "autodateOnStart": true
+      });
+    });
+		$(function(){
+			$('*[name=end]').appendDtpicker({
+	        "autodateOnStart": true
+      });
+		});
+		$(function(){
+			$('*[name=modify_start]').appendDtpicker({
+	        "autodateOnStart": false
+      });
+		});
+		$(function(){
+	 		$('*[name=modify_end]').appendDtpicker({
+	        "autodateOnStart": false
+      });
+		});
+    </script>
+	
+    <script>
+        $('#calendar').fullCalendar({
+        events: '/index/'
+        });
+    </script>
+  </head>
+
+  <body style="overflow:hidden">
+    <div class="pos-f-t">
+      <div class="navbar navbar-light" style="background:#FFFFFF; border-bottom: 2px solid #DDDDDD; margin-top:0px; height:35px;">
+          <form method='post' id="google_sync">
+              {% csrf_token %}
+              <button class="pull-right btn btn-sm btn-info" type="submit" style="margin-top:-5px; margin-left:4px; margin-bottom:25px">Sync</button>
+              <button onclick="location.reload()" type="button" class="btn btn-sm btn-warning" style="margin-top:-5px; margin-left:0px; margin-bottom:25px">Refresh</button>
+          </form>
+      </div>
+    </div>
+    
+    
+    <div id="eventModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+           <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                      <h4 class="modal-title">Add an event</h4>
+              </div>
+              <div class="modal-body">
+                  <form method='post' id="add_new_event">
+                      {% csrf_token %}
+                      <input id="title" type="text" placeholder="Event Name" required style="width:100%; height: 50px; padding-left: 10px"/><br><br>
+                      <input id="start" name="start" placeholder="Starts" required style="width:100%; height: 50px; padding-left: 10px"/><br><br>
+                      <input id="end" name="end" placeholder="Ends" required style="width:100%; height: 50px; padding-left: 10px"/>
+      
+              </div>
+              <div class="modal-footer">
+                  <input class="btn btn-success" type='submit' value='Save'/>
+                  <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                  </form>
+              </div>
+            </div>
+        </div>
+    </div>
+
+<div id="eventModifyModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+    
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Modify event</h4>
+      </div>  
+      <div class="modal-body">
+      <form method='post' id ='modify_event'>
+      {% csrf_token %}
+        <input id="modify_title" type="text" placeholder="Event Name" required style="width:100%; height: 50px; padding-left: 10px"/><br><br>
+        <input id="modify_start" name="modify_start" placeholder="Starts" required style="width:100%; height: 50px; padding-left: 10px"/><br><br>
+        <input id="modify_end" name="modify_end" placeholder="Ends" required style="width:100%; height: 50px; padding-left: 10px"/>
+      
+      </div>
+      <div class="modal-footer">
+      <input class="btn btn-success" style="width:49.5%" type='submit' value='Save'/>
+          <button type="button" class="btn btn-warning" style="width:49.5%" data-dismiss="modal">Close</button>
+          </form><hr>
+          <form method='post' id ='delete_event'>
+              {% csrf_token %}
+              <input class="btn btn-danger" type='submit' style="width:100%" value='Delete'/>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+    <div style="margin-left:22%; margin-right:22%; margin-top:-40px">
+        <div id='calendar'></div>
+    </div>
+                
+    <script>
+
+        $('#calendar:not(".fc-event")').on('contextmenu', function (e) {
+            e.preventDefault()
+        })
+        
+                  $("#google_sync").submit(function(){
+              $.ajax({
+                                   type: 'POST',      
+                                   url:  'google_calendar_sync',
+                                   data: { json_data: JSON.stringify({'csrfmiddlewaretoken': '{{csrf_token}}'})  },                    
+                                });
+                              });
+
+        $('#calendar').fullCalendar({
+            events: {{ event_l|safe }},
+            header: {
+                right: 'prevYear,prev,next,nextYear today',
+                left: 'title',
+                center: ''
+                //right: 'month,agendaWeek,agendaDay'
+            },
+            selectable: true,
+            selectHelper: true,
+            editable: true,
+            select: function(start, end, allDay) {
+              //var title=prompt("Add an event:","Event name");
+              $('#eventModal').modal();
+              $("#add_new_event").submit(function(event){
+              //event.preventDefault();
+              $.ajax({
+                                   type: 'POST',      
+                                   url:  'post_events_data',
+                                   data: { json_data: JSON.stringify({'csrfmiddlewaretoken': '{{csrf_token}}','start':$('#start').val() ,'end':$('#end').val(), 'title': $('#title').val()})  },  
+                                   complete: function() { request = null }                  
+                                });
+                                $('#eventModal').modal('toggle');
+                                $('#calendar').fullCalendar( 'rerenderEvents' )
+                              });
+          },
+          
+          eventClick: function(event) {
+          //prompt(event.start);
+          $('#eventModifyModal').modal();
+          $("#modify_title").attr("value",event.title);
+          $("#modify_start").attr("value",(event.start).toISOString().slice(0, 19).replace('T', ' '));
+          $("#modify_end").attr("value",(event.end).toISOString().slice(0, 19).replace('T', ' '));
+          var eid = event.id;
+          $("#modify_event").submit(function(event){
+              $.ajax({
+                                   type: 'POST',      
+                                   url:  'modify_events_data',
+                                   data: { json_data: JSON.stringify({'csrfmiddlewaretoken': '{{csrf_token}}','start':$('#modify_start').val(),'end':$('#modify_end').val(), 'title': $('#modify_title').val(), 'eid': eid})  },  
+                                   complete: function() { request = null }                 
+                                });
+                                $('#eventModifyModal').modal('toggle');
+                                $('#calendar').fullCalendar( 'rerenderEvents' )
+                              });
+                              
+          $("#delete_event").submit(function(event){
+              $.ajax({
+                                   type: 'POST',      
+                                   url:  'delete_events_data',
+                                   data: { json_data: JSON.stringify({'csrfmiddlewaretoken': '{{csrf_token}}', 'id': eid})  },                    
+                                });
+                                $('#eventModifyModal').modal('toggle');
+                                $('#calendar').fullCalendar( 'rerenderEvents' )
+                              });
+        }
+            
+        });
+
+    </script>
+       
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+    <script>
+        $('#calendar:not(".fc-event")').on('contextmenu', function(e){ e.preventDefault() })
+    </script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>
+    
+  </body>
+</html>
+

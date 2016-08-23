@@ -1,0 +1,1 @@
+python-mysqldb python-simplejson python-bson python-httplib2
