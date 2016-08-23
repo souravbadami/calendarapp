@@ -1,6 +1,12 @@
 # calendarApp
 A single page django based application which let's you maintain your events and sync events with google calendar api. Follow the step given below to set up the application.
 
+<p align="center">
+  <a href="http://www.youtube.com/watch?v=Ntcw0H0hwPU" target="_blank">
+    <img src="https://i.imgsafe.org/c829b0c10d.png">
+  </a>
+</p>
+
 ## Installation
 
 1. Open a terminal and navigate to the project root folder and type `pip install -U -r requirements-1.txt`
