@@ -29,20 +29,13 @@ except ImportError:
 cgitb.enable()  # for troubleshooting
 
 def index(request):
-    #if request.is_ajax():
-    #    return get_events_data(request.GET['start'], request.GET['end'])
     events = CalendarEvent.objects.values('title','start', 'end', 'id')
-    #for ev in events:
-    #	ev['start'] = ev['start'].replace(tzinfo=None)
-    #print(list(events))
     ev = JsonResponse(list(events), safe=False)
-    #print(ev.content)
     return TemplateResponse(request, 'home/index.html', {'event_l':ev.content},)
 
 @csrf_exempt        
 def post_events_data(request):
     if request.method == 'POST' and request.is_ajax():
-        #print("TEST")
         data_string = request.POST.get('json_data')
         data_dict = json.loads(data_string)
         title_data=data_dict['title']
@@ -55,19 +48,14 @@ def post_events_data(request):
 @csrf_exempt
 def modify_events_data(request):
     if request.method == 'POST' and request.is_ajax():
-        #print("TEST")
         data_string = request.POST.get('json_data')
         data_dict = json.loads(data_string)
-        #print(data_dict['start'])
         title_data=data_dict['title']
-        #print(data_dict['title'])
         start_data=data_dict['start']
         end_data=data_dict['end']
         eid=data_dict['eid']
         evnt = CalendarEvent.objects.get(pk = eid)
-        #print(title_data)
         evnt.title=title_data
-        #print(evnt.title)
         evnt.start=start_data
         evnt.end=end_data
         evnt.save()
